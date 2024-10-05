@@ -1,28 +1,34 @@
 import numpy as np
 from NOA import NOA
+from Obstacle import create_circle
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
 
-num_solutions = 25  # Number of search agents
-max_iteration =2000  # Maximum number of function evaluations
-num_sensors = 45
+num_solutions = 50  # Number of search agents
+max_iteration = 15000  # Maximum number of function evaluations
+num_sensors = 30
 sensing_range = 10
 communication_range = 20
 min_length = 0
 max_length = 100
 
+obstacle_radius = 30
+obstacle_map = create_circle(obstacle_radius, max_length)
+center_map = max_length // 2
+
 # solution = [x1, y1, x2, y2, x3, y3, ... xn, yn]
 
 # Call the NOA optimization algorithm (Nutcracker Optimizer)
-best_fitness, best_solution, convergence_curve, t = NOA(
+best_score, best_pos, convergence_curve, t = NOA(
     num_solutions, max_iteration,
     num_sensors, sensing_range, communication_range,
-    min_length, max_length
+    min_length, max_length,
+    obstacle_map, obstacle_radius
 )
 
-best_solution = best_solution.reshape(-1, 2)
+best_pos = best_pos.reshape(-1, 2)
 
-print(f"Best Fitness: {1 - best_fitness:.4f}")
+print(f"Best Fitness: {1 - best_score:.4f}")
 
 ############################################################################
 # Plot the overall best solution after the main loop
@@ -31,9 +37,12 @@ fig, ax = plt.subplots()
 
 colors = plt.cm.viridis(np.linspace(0, 1, num_sensors*num_sensors))  # Create colors for the points
 
+obstacle_circle = Circle((center_map, center_map), obstacle_radius, color='black', fill=False, linewidth=1)
+ax.add_patch(obstacle_circle)
+
 # Plot points and circles
 for i in range(num_sensors):
-    x, y = best_solution[i, :]
+    x, y = best_pos[i, :]
     # Plot points with color
     ax.plot(x, y, 'ro', markersize=5)
     
@@ -47,8 +56,8 @@ for i in range(num_sensors):
 # Draw lines between points within communication range
 for i in range(num_sensors):
     for j in range(i + 1, num_sensors):
-        x_i, y_i = best_solution[i, :]
-        x_j, y_j = best_solution[j, :]
+        x_i, y_i = best_pos[i, :]
+        x_j, y_j = best_pos[j, :]
         distance = np.sqrt((x_i - x_j)**2 + (y_i - y_j)**2)
         if distance <= communication_range:
             ax.plot([x_i, x_j], [y_i, y_j], color=colors[np.random.randint(0,num_sensors*num_sensors-1)], linewidth=1)
@@ -64,5 +73,5 @@ ax.set_aspect('equal', adjustable='box')
 plt.grid(True)
 plt.show()  # Show the final plot
 
-print(f"Overall Best Fitness: {1 - best_fitness}")
+print(f"Overall Best Fitness: {1 - best_score}")
 
