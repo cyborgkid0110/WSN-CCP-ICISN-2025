@@ -37,10 +37,7 @@ best_score, bestSol, convergence_curve, t = NOA(
     nPop, MaxIt,
     nNode, Rs, Rc,
     VarMin, VarMax,
-    ban_position, Area1
-)
-
-bestSol = bestSol.reshape(-1, 2)
+    ban_position)
 
 print(f"Best Fitness: {1 - best_score:.4f}")
 
