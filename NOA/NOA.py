@@ -111,9 +111,9 @@ def generate_new_solution(nNode, Rc, VarMaxX, VarMaxY, obsArea):
     
     return solution
 
-def generate_new_generation(nNode, num_solutions, Rc, VarMaxX, VarMaxY, obsArea):
+def generate_new_generation(nNode, nPop, Rc, VarMaxX, VarMaxY, obsArea):
     initPop = []
-    for _ in range(num_solutions):
+    for _ in range(nPop):
         solution = generate_new_solution(nNode,Rc, VarMaxX, VarMaxY, obsArea)
         initPop.append(solution)
 

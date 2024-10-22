@@ -7,7 +7,7 @@ from matplotlib.patches import Circle
 import csv
 
 nPop = 25  # Number of search agents
-MaxIt = 100  # Maximum number of function evaluations
+MaxIt = 500  # Maximum number of function evaluations
 nNode = 50
 Rs = 10
 Rc = 10
