@@ -8,7 +8,7 @@ import csv
 
 nPop = 25  # Number of search agents
 MaxIt = 500  # Maximum number of function evaluations
-nNode = 50
+nNode = 60
 Rs = 10
 Rc = 10
 VarMin = 0
