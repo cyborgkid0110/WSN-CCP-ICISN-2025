@@ -64,11 +64,11 @@ def check_obstacle(x_pos, y_pos, VarMaxX, VarMaxY, obsArea):
     yj_c = max(0, min(yj_c, VarMaxY))
     xj_t = max(0, min(xj_t, VarMaxX))
     yj_t = max(0, min(yj_t, VarMaxY))
-    if (obsArea[yj,xj] == 255
-        and obsArea[yj,xj_c] == 255 
-        and obsArea[yj,xj_t] == 255
-        and obsArea[yj_c,xj] == 255
-        and obsArea[yj_t,xj] == 255):
+    if (obsArea[yj,xj] != 255
+        and obsArea[yj,xj_c] != 255 
+        and obsArea[yj,xj_t] != 255
+        and obsArea[yj_c,xj] != 255
+        and obsArea[yj_t,xj] != 255):
         return True
     
     return False
