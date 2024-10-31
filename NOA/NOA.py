@@ -356,6 +356,8 @@ def NOA(nPop, MaxIt,
 
         t += 1
         Convergence_curve[t - 1] = bestFit
+        if (bestFit == 0):
+            break
         if t >= MaxIt:
             break
         print(f"Iteration {t}, case {case}, Best Coverage: {1 - bestFit:.4f}")
