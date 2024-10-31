@@ -18,7 +18,7 @@ def levy(n, m, beta):
     
     return z
 
-def fitness_function(sensor_nodes, nNode, Rs, VarMaxX, VarMaxY, ban_position):
+def fitness_function(sensor_nodes, nNode, Rs, VarMaxX, VarMaxY):
     node_pos = np.array(sensor_nodes).reshape(-1, 2)
     M = (VarMaxX + 1) * (VarMaxY + 1)
     Rss = Rs ** 2 
@@ -28,10 +28,7 @@ def fitness_function(sensor_nodes, nNode, Rs, VarMaxX, VarMaxY, ban_position):
         sensor_x, sensor_y = node_pos[i, :]
         distances = (grid_x - sensor_x) ** 2 + (grid_y - sensor_y) ** 2
         matrix_c[distances <= Rss] = 1
-    ban_x, ban_y = zip(*ban_position)
-    matrix_c[ban_y, ban_x] = 0  # Remove coverage in banned positions
-    ban_points = len(ban_position)
-    coverage_ratio = np.sum(matrix_c) / (M - ban_points)
+    coverage_ratio = np.sum(matrix_c) / (M)
     return 1 - round(coverage_ratio, 4)
 
 
@@ -51,51 +48,24 @@ def check_connectivity(solution, nNode, Rc):
     # Check if the graph is fully connected
     return nx.is_connected(graph)
 
-def check_obstacle(x_pos, y_pos, VarMaxX, VarMaxY, obsArea):
-    xj = int(x_pos)
-    yj = int(y_pos)
-    xj = max(0, min(xj, VarMaxX))
-    yj = max(0, min(yj, VarMaxY))
-    xj_c = xj+1
-    yj_c = yj+1
-    xj_t = xj-1
-    yj_t = yj-1
-    xj_c = max(0, min(xj_c, VarMaxX))
-    yj_c = max(0, min(yj_c, VarMaxY))
-    xj_t = max(0, min(xj_t, VarMaxX))
-    yj_t = max(0, min(yj_t, VarMaxY))
-    if (obsArea[yj,xj] == 255
-        and obsArea[yj,xj_c] == 255 
-        and obsArea[yj,xj_t] == 255
-        and obsArea[yj_c,xj] == 255
-        and obsArea[yj_t,xj] == 255):
-        return True
-    
-    return False
-
 ###############################################################################
 ############################### SENSOR FUNCTION ###############################
 ###############################################################################
 
 # Generate new position
-def generate_new_position(x_prev, y_prev, VarMaxX, VarMaxY, Rc, obsArea):
-    check = True
-    while check is True:
-        r = random.uniform(Rc * 0.5, Rc)
-        theta = random.uniform(0, 2 * np.pi)
+def generate_new_position(x_prev, y_prev, VarMaxX, VarMaxY, Rc):
+    r = random.uniform(Rc * 0.5, Rc)
+    theta = random.uniform(0, 2 * np.pi)
 
-        x_new = x_prev + r * np.cos(theta)
-        y_new = y_prev + r * np.sin(theta)
-        
-        x_new = np.clip(x_new, 0, VarMaxX)
-        y_new = np.clip(y_new, 0, VarMaxY)
-
-        if (check_obstacle(x_new, y_new, VarMaxX, VarMaxY, obsArea) is True):
-            check = False
+    x_new = x_prev + r * np.cos(theta)
+    y_new = y_prev + r * np.sin(theta)
+    
+    x_new = np.clip(x_new, 0, VarMaxX)
+    y_new = np.clip(y_new, 0, VarMaxY)
     
     return x_new, y_new
 
-def generate_new_solution(nNode, Rc, VarMaxX, VarMaxY, obsArea):
+def generate_new_solution(nNode, Rc, VarMaxX, VarMaxY):
     solution = np.zeros((nNode, 2))  # Initialize matrix nNode x 2
     x0, y0 = 50, 50  # Initial sensor position
     solution[0, :] = [x0, y0]  # Set initial sensor position
@@ -106,19 +76,17 @@ def generate_new_solution(nNode, Rc, VarMaxX, VarMaxY, obsArea):
         else:
             prevNode = random.randint(0, i - 1)
         x_prev, y_prev = solution[prevNode, :]
-        x_new, y_new = generate_new_position(x_prev, y_prev, VarMaxX, VarMaxY, Rc, obsArea)
+        x_new, y_new = generate_new_position(x_prev, y_prev, VarMaxX, VarMaxY, Rc)
         solution[i, :] = [x_new, y_new]
     
     return solution
 
-def generate_new_generation(nNode, nPop, Rc, VarMaxX, VarMaxY, obsArea):
+def generate_new_generation(nNode, nPop, Rc, VarMaxX, VarMaxY):
     initPop = []
     for _ in range(nPop):
-        solution = generate_new_solution(nNode,Rc, VarMaxX, VarMaxY, obsArea)
+        solution = generate_new_solution(nNode,Rc, VarMaxX, VarMaxY)
         initPop.append(solution)
-
     print("Done initialize pop")
-
     return initPop
 
 ###############################################################################
@@ -127,8 +95,7 @@ def generate_new_generation(nNode, nPop, Rc, VarMaxX, VarMaxY, obsArea):
 
 def NOA(nPop, MaxIt,
         nNode, Rs, Rc,
-        VarMin, VarMax,
-        ban_position, obsArea):
+        VarMin, VarMax):
 
     dim = 2 * nNode
     lb = VarMin * np.ones(dim)
@@ -146,7 +113,7 @@ def NOA(nPop, MaxIt,
     Pa2 = 0.2
     Prb = 0.2
 
-    pop = generate_new_generation(nNode, nPop, Rc, VarMax, VarMax, obsArea)
+    pop = generate_new_generation(nNode, nPop, Rc, VarMax, VarMax)
     pop = np.array([ [element for pair in row for element in pair] for row in pop])
 
     Lbest = pop.copy()  # Local best position initialization
@@ -156,7 +123,7 @@ def NOA(nPop, MaxIt,
     NC_Fit = np.zeros(nPop)
     for i in range(nPop):
         # Calculate fitness value for each solution
-        NC_Fit[i] = fitness_function(pop[i, :], nNode, Rs, VarMax + 1, VarMax + 1, ban_position)
+        NC_Fit[i] = fitness_function(pop[i, :], nNode, Rs, VarMax + 1, VarMax + 1)
         LFit[i] = NC_Fit[i]  # Set local best
         if NC_Fit[i] < bestFit:
             bestFit = NC_Fit[i]
@@ -193,33 +160,24 @@ def NOA(nPop, MaxIt,
                 cv1 = random.randint(0, nPop - 1)
                 Pa1 = (MaxIt - t) / MaxIt
 
-                currentFit = fitness_function(pop[i, :], nNode, Rs, VarMax + 1, VarMax + 1, ban_position)
+                currentFit = fitness_function(pop[i, :], nNode, Rs, VarMax + 1, VarMax + 1)
 
                 # Exploration phase 1
                 if random.random() < Pa1:
                     for j in range(dim):
                         cv2 = random.randint(0, nPop - 1)
                         r2 = random.random()
-                        # if t < MaxIt / 2: # move global random
-                        if random.random() > random.random():
+                        if t < MaxIt / 2: # move global random
+                        # if random.random() > random.random():
                             # if random.random() > random.random():
                             temporary_pos = pop[i, j]
                             pop[i, j] = mo[j] + RL[i,j] * (pop[cv, j] - pop[cv1,j])
                             pop[i, j] = max(lb[j], min(pop[i, j], ub[j]))
-                            newFit = fitness_function(pop[i, :], nNode, Rs, VarMax + 1, VarMax + 1, ban_position)
+                            newFit = fitness_function(pop[i, :], nNode, Rs, VarMax + 1, VarMax + 1)
                             if (check_connectivity(pop[i, :], nNode, Rc) == False or newFit > currentFit):
                                 pop[i, j] = temporary_pos
                             else:
-                                if j % 2 == 0:
-                                    if (check_obstacle(pop[i, j], pop[i, j + 1], VarMax, VarMax, obsArea) is False):
-                                        pop[i, j] = temporary_pos
-                                    else:
-                                        currentFit = newFit
-                                else:
-                                    if (check_obstacle(pop[i, j - 1], pop[i, j], VarMax, VarMax, obsArea) is False):
-                                        pop[i, j] = temporary_pos
-                                    else:
-                                        currentFit = newFit
+                                currentFit = newFit
                             case=1.1
                             
                         else: # explore around a random solution
@@ -227,20 +185,11 @@ def NOA(nPop, MaxIt,
                             temporary_pos = pop[i, j]
                             pop[i, j] = pop[cv2, j] + 0.1 * mu * (pop[cv, j] - pop[cv1, j]) + 0.1 * mu * (random.random() < Alpha) * (r2 * r2 * ub[j] - lb[j])
                             pop[i, j] = max(lb[j], min(pop[i, j], ub[j]))
-                            newFit = fitness_function(pop[i, :], nNode, Rs, VarMax + 1, VarMax + 1, ban_position)
+                            newFit = fitness_function(pop[i, :], nNode, Rs, VarMax + 1, VarMax + 1)
                             if (check_connectivity(pop[i, :], nNode, Rc) == False or newFit > currentFit):
                                 pop[i, j] = temporary_pos
                             else:
-                                if j % 2 == 0:
-                                    if (check_obstacle(pop[i, j], pop[i, j + 1], VarMax, VarMax, obsArea) is False):
-                                        pop[i, j] = temporary_pos
-                                    else:
-                                        currentFit = newFit
-                                else:
-                                    if (check_obstacle(pop[i, j - 1], pop[i, j], VarMax, VarMax, obsArea) is False):
-                                        pop[i, j] = temporary_pos
-                                    else:
-                                        currentFit = newFit
+                                currentFit = newFit
                             case=1.2
 
                 # Exploitation phase 1
@@ -253,20 +202,11 @@ def NOA(nPop, MaxIt,
                             temporary_pos = pop[i, j]
                             pop[i, j] = pop[i, j] + mu * abs(RL[i, j]) * (bestSol[j] - pop[i, j]) + 0.5 * r1 * (pop[cv, j] - pop[cv1, j])
                             pop[i, j] = max(lb[j], min(pop[i, j], ub[j]))
-                            newFit = fitness_function(pop[i, :], nNode, Rs, VarMax + 1, VarMax + 1, ban_position)
+                            newFit = fitness_function(pop[i, :], nNode, Rs, VarMax + 1, VarMax + 1)
                             if (check_connectivity(pop[i, :], nNode, Rc) == False or newFit > currentFit):
                                 pop[i, j] = temporary_pos
                             else:
-                                if j % 2 == 0:
-                                    if (check_obstacle(pop[i, j], pop[i, j + 1], VarMax, VarMax, obsArea) is False):
-                                        pop[i, j] = temporary_pos
-                                    else:
-                                        currentFit = newFit
-                                else:
-                                    if (check_obstacle(pop[i, j - 1], pop[i, j], VarMax, VarMax, obsArea) is False):
-                                        pop[i, j] = temporary_pos
-                                    else:
-                                        currentFit = newFit
+                                currentFit = newFit
                                 
                     elif random.random() < random.random():
                         case=2.2  
@@ -275,42 +215,24 @@ def NOA(nPop, MaxIt,
                             temporary_pos = pop[i, j]
                             pop[i, j] = bestSol[j] + mu * 0.5 * (pop[cv, j] - pop[cv1, j])
                             pop[i, j] = max(lb[j], min(pop[i, j], ub[j]))
-                            newFit = fitness_function(pop[i, :], nNode, Rs, VarMax + 1, VarMax + 1, ban_position)
+                            newFit = fitness_function(pop[i, :], nNode, Rs, VarMax + 1, VarMax + 1)
                             if (check_connectivity(pop[i, :], nNode, Rc) == False or newFit > currentFit):
                                 pop[i, j] = temporary_pos
                             else:
-                                if j % 2 == 0:
-                                    if (check_obstacle(pop[i, j], pop[i, j + 1], VarMax, VarMax, obsArea) is False):
-                                        pop[i, j] = temporary_pos
-                                    else:
-                                        currentFit = newFit
-                                else:
-                                    if (check_obstacle(pop[i, j - 1], pop[i, j], VarMax, VarMax, obsArea) is False):
-                                        pop[i, j] = temporary_pos
-                                    else:
-                                        currentFit = newFit                
+                                currentFit = newFit             
                                  
                     else:
                         case=2.3
                         for j in range(dim):
-                            currentFit = fitness_function(pop[i, :], nNode, Rs, VarMax + 1, VarMax + 1, ban_position)
+                            # currentFit = fitness_function(pop[i, :], nNode, Rs, VarMax + 1, VarMax + 1)
                             temporary_pos = pop[i, j]
                             pop[i, j] = bestSol[j] * abs(l)
                             pop[i, j] = max(lb[j], min(pop[i, j], ub[j]))
-                            newFit = fitness_function(pop[i, :], nNode, Rs, VarMax + 1, VarMax + 1, ban_position)
+                            newFit = fitness_function(pop[i, :], nNode, Rs, VarMax + 1, VarMax + 1)
                             if (check_connectivity(pop[i, :], nNode, Rc) == False or newFit > currentFit):
                                 pop[i, j] = temporary_pos
                             else:
-                                if j % 2 == 0:
-                                    if (check_obstacle(pop[i, j], pop[i, j + 1], VarMax, VarMax, obsArea) is False):
-                                        pop[i, j] = temporary_pos
-                                    else:
-                                        currentFit = newFit
-                                else:
-                                    if (check_obstacle(pop[i, j - 1], pop[i, j], VarMax, VarMax, obsArea) is False):
-                                        pop[i, j] = temporary_pos
-                                    else:
-                                        currentFit = newFit
+                                currentFit = newFit
 
                 NC_Fit[i] = currentFit
             
@@ -331,7 +253,7 @@ def NOA(nPop, MaxIt,
             # Cache-search and Recovery strategy
             ## Compute the reference points for each Nutcraker
             for i in range(nPop):
-                currentFit = fitness_function(pop[i, :], nNode, Rs, VarMax + 1, VarMax + 1, ban_position)
+                currentFit = fitness_function(pop[i, :], nNode, Rs, VarMax + 1, VarMax + 1)
                 ang = np.pi * random.random()
                 cv = random.randint(0, nPop - 1)
                 cv1 = random.randint(0, nPop - 1)
@@ -340,44 +262,15 @@ def NOA(nPop, MaxIt,
                         if j1 == 1:
                             # Random position of 1st object around sensor 
                             if ang != np.pi / 2:
-                                RP[j1, j] = pop[i, j] + a * np.cos(ang) * (pop[cv, j] - pop[cv1, j]) * 0.3
-                                if j % 2 == 0:
-                                    if (check_obstacle(RP[j1, j], RP[j1, j+1], VarMax, VarMax, obsArea) is False):
-                                        skipSol = True
-                                else:
-                                    if (check_obstacle(RP[j1, j-1], RP[j1, j], VarMax, VarMax, obsArea) is False):
-                                        skipSol = True
-                                        
+                                RP[j1, j] = pop[i, j] + a * np.cos(ang) * (pop[cv, j] - pop[cv1, j]) * 0.3   
                             else:
                                 RP[j1, j] = pop[i, j] + a * RP[random.randint(0, 1), j] * 0.5
-                                if j % 2 == 0:
-                                    if (check_obstacle(RP[j1, j], RP[j1, j+1], VarMax, VarMax, obsArea) is False):
-                                        skipSol = True
-                                else:
-                                    if (check_obstacle(RP[j1, j-1], RP[j1, j], VarMax, VarMax, obsArea) is False):
-                                        skipSol = True
                         else:
                             # Compute the second reference point for the ith Nutcraker
                             if ang != np.pi / 2:
-                                RP[j1, j] = pop[i, j] + a * np.cos(ang) * ((ub[j] - lb[j]) + lb[j]) * (random.random() < Prb) * 0.5
-                                if j % 2 == 0:
-                                    if (check_obstacle(RP[j1, j], RP[j1, j+1], VarMax, VarMax, obsArea) is False):
-                                        skipSol = True
-                                else:
-                                    if (check_obstacle(RP[j1, j-1], RP[j1, j], VarMax, VarMax, obsArea) is False):
-                                        skipSol = True
+                                RP[j1, j] = pop[i, j] + a * np.cos(ang) * ((ub[j] - lb[j]) * random.random() + lb[j]) * (random.random() < Prb) * 0.5
                             else:
                                 RP[j1, j] = pop[i, j] + a * RP[random.randint(0, 1), j] * (random.random() < Prb) * 0.75
-                                if j % 2 == 0:
-                                    if (check_obstacle(RP[j1, j], RP[j1, j+1], VarMax, VarMax, obsArea) is False):
-                                        skipSol = True
-                                else:
-                                    if (check_obstacle(RP[j1, j-1], RP[j1, j], VarMax, VarMax, obsArea) is False):
-                                        skipSol = True
-                        if (skipSol is True):
-                            break
-                    if (skipSol is True):
-                        break
                 
                 RP[1, :] = np.clip(RP[1, :], lb, ub)
                 RP[0, :] = np.clip(RP[0, :], lb, ub)
@@ -391,20 +284,11 @@ def NOA(nPop, MaxIt,
                             temporary_pos = pop[i, j]
                             pop[i, j] = pop[i, j] + (random.random() * (bestSol[j] - pop[i, j]) + random.random() * (RP[0, j] - pop[cv, j]))
                             pop[i, j] = max(lb[j], min(pop[i, j], ub[j]))
-                            newFit = fitness_function(pop[i, :], nNode, Rs, VarMax + 1, VarMax + 1, ban_position)
+                            newFit = fitness_function(pop[i, :], nNode, Rs, VarMax + 1, VarMax + 1)
                             if (check_connectivity(pop[i, :], nNode, Rc) == False or newFit > currentFit):
                                 pop[i, j] = temporary_pos
                             else:
-                                if j % 2 == 0:
-                                    if (check_obstacle(pop[i, j], pop[i, j + 1], VarMax, VarMax, obsArea) is False):
-                                        pop[i, j] = temporary_pos
-                                    else:
-                                        currentFit = newFit
-                                else:
-                                    if (check_obstacle(pop[i, j - 1], pop[i, j], VarMax, VarMax, obsArea) is False):
-                                        pop[i, j] = temporary_pos
-                                    else:
-                                        currentFit = newFit
+                                currentFit = newFit
                             case=3.1
                                 
                         else:
@@ -412,20 +296,11 @@ def NOA(nPop, MaxIt,
                             temporary_pos = pop[i, j]
                             pop[i, j] = pop[i, j] + (random.random() * (bestSol[j] - pop[i, j]) + random.random() * (RP[1, j] - pop[cv, j]))
                             pop[i, j] = max(lb[j], min(pop[i, j], ub[j]))
-                            newFit = fitness_function(pop[i, :], nNode, Rs, VarMax + 1, VarMax + 1, ban_position)
+                            newFit = fitness_function(pop[i, :], nNode, Rs, VarMax + 1, VarMax + 1)
                             if (check_connectivity(pop[i, :], nNode, Rc) == False or newFit > currentFit):
                                 pop[i, j] = temporary_pos
                             else:
-                                if j % 2 == 0:
-                                    if (check_obstacle(pop[i, j], pop[i, j + 1], VarMax, VarMax, obsArea) is False):
-                                        pop[i, j] = temporary_pos
-                                    else:
-                                        currentFit = newFit
-                                else:
-                                    if (check_obstacle(pop[i, j - 1], pop[i, j], VarMax, VarMax, obsArea) is False):
-                                        pop[i, j] = temporary_pos
-                                    else:
-                                        currentFit = newFit
+                                currentFit = newFit
                             case=3.2
                     
                     NC_Fit[i] = currentFit
@@ -446,22 +321,22 @@ def NOA(nPop, MaxIt,
                 # Exploration stage 2: Cache-search stage
                 else:
                     # Evaluation
-                    NC_Fit1 = fitness_function(RP[0], nNode, Rs, VarMax + 1 , VarMax + 1, ban_position)
+                    NC_Fit1 = fitness_function(RP[0], nNode, Rs, VarMax + 1 , VarMax + 1)
                     
                     # Evaluations
-                    NC_Fit2 = fitness_function(RP[1], nNode, Rs, VarMax + 1, VarMax + 1, ban_position)
+                    NC_Fit2 = fitness_function(RP[1], nNode, Rs, VarMax + 1, VarMax + 1)
                     
                     # Applying Eq. (17) to trade-off between the exploration behaviors
                     if NC_Fit2 < NC_Fit1 and NC_Fit2 < NC_Fit[i]:
                         temp = RP[1, :]
-                        if (check_connectivity(RP[1, :], nNode, Rc) == True and skipSol is False):
+                        if (check_connectivity(RP[1, :], nNode, Rc) == True):
                             NC_Fit[i] = NC_Fit2
                             pop[i, :] = temp
                         case=4.1
 
                     elif NC_Fit1 < NC_Fit2 and NC_Fit1 < NC_Fit[i]:
                         temp = RP[0, :]
-                        if (check_connectivity(RP[0, :], nNode, Rc) == True and skipSol is False):
+                        if (check_connectivity(RP[0, :], nNode, Rc) == True):
                             pop[i, :] = temp
                             NC_Fit[i] = NC_Fit1
                         case=4.2

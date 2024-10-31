@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Plot the overall best solution after the main loop
-fig, (ax, ay) = plt.subplots(1,2)
+fig, ax = plt.subplots()
 
 def draw_circle(ax, center, radius, small_radius):
     # Đường bao  phủ của cảm biến
@@ -18,7 +18,7 @@ def draw_circle(ax, center, radius, small_radius):
     ax.add_artist(small_circle)
 
 small_radius=1 #red circle
-def show_sensor_matrix(num_sensor,Rs,overall_best_solution,best_fitness, ban_position):
+def show_sensor_matrix(num_sensor,Rs,overall_best_solution,best_fitness):
     for i in range(num_sensor):
         x, y = overall_best_solution[i, :]
         draw_circle(ax,(x,y),Rs,small_radius)
@@ -35,22 +35,6 @@ def show_sensor_matrix(num_sensor,Rs,overall_best_solution,best_fitness, ban_pos
     ax.set_title(f"Coverage Ratio {round(best_fitness,2)}%")
     # ax.invert_yaxis()
 
-    # set limit to obstacle
-    ay.set_xlim(0, 100)
-    ay.set_ylim(0, 100)
-    ay.set_aspect('equal', adjustable='box')
-    ay.set_xticks(np.arange(0, 101, 10))
-    ay.set_yticks(np.arange(0, 101, 10))
-    ay.grid(True, linewidth=0.5)
-    # ay.invert_yaxis()
-
-    for bp in ban_position:
-        ay.plot(bp[0], bp[1], 'o', color='#000000')
-    for i in range(num_sensor):
-        x, y = overall_best_solution[i, :]
-        draw_circle(ay,(x,y),Rs,small_radius)
-
-    ay.set_title(f"Coverage Ratio {round(best_fitness,2)}%")
     plt.savefig('graph.pdf', format='pdf', dpi=300)
     plt.show()
 

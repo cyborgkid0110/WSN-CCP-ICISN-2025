@@ -7,37 +7,18 @@ from matplotlib.patches import Circle
 import csv
 
 nPop = 25  # Number of search agents
-MaxIt = 500  # Maximum number of function evaluations
-nNode = 60
+MaxIt = 200  # Maximum number of function evaluations
+nNode = 40
 Rs = 10
-Rc = 10
+Rc = 20
 VarMin = 0
 VarMax = 100
-
-image = Image.open('C1_v2.png')
-image_resized = image.resize((VarMax+1, VarMax+1))
-image_L = image_resized.convert('L')
-Area1 = np.zeros((VarMax+1,VarMax+1))
-image_matrix = np.array(image_L)
-
-image_1 =  Image.open('C1_real.png')
-
-for i in range(VarMax+1):
-    for j in range(VarMax+1):
-        if image_matrix[i,j]  > 1:
-            Area1[i,j] = 255
-        else:
-            Area1[i,j] = 1
-
-ban_position_list = np.argwhere(Area1 == 1)
-ban_position = [[x, y] for y, x in ban_position_list]
 
 # Call the NOA optimization algorithm (Nutcracker Optimizer)
 best_score, bestSol, convergence_curve, t = NOA(
     nPop, MaxIt,
     nNode, Rs, Rc,
-    VarMin, VarMax,
-    ban_position, Area1)
+    VarMin, VarMax)
 
 bestSol = np.array(bestSol).reshape(-1, 2)
 
@@ -48,5 +29,5 @@ with open('FOA.CSV', mode ='w', newline='') as file:
     csv_writer.writerow([1 - best_score])
     csv_writer.writerows(bestSol)
 
-show_sensor_matrix(nNode, Rs, bestSol, (1 -best_score) * 100, ban_position)
+show_sensor_matrix(nNode, Rs, bestSol, (1 -best_score) * 100)
 
