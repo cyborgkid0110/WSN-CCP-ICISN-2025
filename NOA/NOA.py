@@ -340,7 +340,7 @@ def NOA(nPop, MaxIt,
                         if j1 == 1:
                             # Random position of 1st object around sensor 
                             if ang != np.pi / 2:
-                                RP[j1, j] = pop[i, j] + a * np.cos(ang) * (pop[cv, j] - pop[cv1, j]) * 0.3
+                                RP[j1, j] = pop[i, j] + a * np.cos(ang) * (pop[cv, j] - pop[cv1, j])
                                 if j % 2 == 0:
                                     if (check_obstacle(RP[j1, j], RP[j1, j+1], VarMax, VarMax, obsArea) is False):
                                         skipSol = True
@@ -349,7 +349,7 @@ def NOA(nPop, MaxIt,
                                         skipSol = True
                                         
                             else:
-                                RP[j1, j] = pop[i, j] + a * RP[random.randint(0, 1), j] * 0.5
+                                RP[j1, j] = pop[i, j] + a * RP[random.randint(0, 1), j]
                                 if j % 2 == 0:
                                     if (check_obstacle(RP[j1, j], RP[j1, j+1], VarMax, VarMax, obsArea) is False):
                                         skipSol = True
@@ -359,7 +359,7 @@ def NOA(nPop, MaxIt,
                         else:
                             # Compute the second reference point for the ith Nutcraker
                             if ang != np.pi / 2:
-                                RP[j1, j] = pop[i, j] + a * np.cos(ang) * ((ub[j] - lb[j]) + lb[j]) * (random.random() < Prb) * 0.5
+                                RP[j1, j] = pop[i, j] + a * np.cos(ang) * ((ub[j] - lb[j]) + lb[j]) * (random.random() < Prb)
                                 if j % 2 == 0:
                                     if (check_obstacle(RP[j1, j], RP[j1, j+1], VarMax, VarMax, obsArea) is False):
                                         skipSol = True
@@ -367,7 +367,7 @@ def NOA(nPop, MaxIt,
                                     if (check_obstacle(RP[j1, j-1], RP[j1, j], VarMax, VarMax, obsArea) is False):
                                         skipSol = True
                             else:
-                                RP[j1, j] = pop[i, j] + a * RP[random.randint(0, 1), j] * (random.random() < Prb) * 0.75
+                                RP[j1, j] = pop[i, j] + a * RP[random.randint(0, 1), j] * (random.random() < Prb)
                                 if j % 2 == 0:
                                     if (check_obstacle(RP[j1, j], RP[j1, j+1], VarMax, VarMax, obsArea) is False):
                                         skipSol = True
