@@ -20,7 +20,7 @@ image_1 =  Image.open('C1_real.png')
 
 for i in range(20,81):
     for j in range(60,81):
-        Area1[i,j] = 255
+        Area1[j,i] = 255
 
 ban_position_list = np.argwhere(Area1 == 255)
 ban_position = [[x, y] for y, x in ban_position_list]
